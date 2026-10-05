@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Кабинет — AUREUM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="site-header"></div>
+  <main class="section">
+    <div class="container">
+      <div class="eyebrow">Cabinet</div>
+      <h2 id="hello">Личный кабинет</h2>
+      <p class="muted" id="sub">Войдите, чтобы видеть ставки и избранное.</p>
+      <div class="two-col" style="margin-top:28px">
+        <div class="panel">
+          <h3>Мои ставки</h3>
+          <div id="my-bids"></div>
+        </div>
+        <div class="panel">
+          <h3>Избранные лоты</h3>
+          <div id="watch"></div>
+          <button class="btn btn-ghost" id="logout" style="margin-top:16px">Выйти</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="site-footer"></div>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    function line(lot, rec) {
+      return `<p><a href="lot.html?id=${lot.id}">${lot.title}</a><br><span class="muted">Сейчас ${money(rec.current)} · осталось <span class="js-timer" data-end="${rec.endsAt}">${remain(rec.endsAt)}</span></span></p>`;
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+      const user = currentUser();
+      if (!user) {
+        openAuth();
+        document.getElementById("my-bids").innerHTML = "<p class='muted'>Нет данных</p>";
+        document.getElementById("watch").innerHTML = "<p class='muted'>Нет данных</p>";
+      } else {
+        document.getElementById("hello").textContent = "Здравствуйте, " + user;
+        document.getElementById("sub").textContent = "История торгов хранится в этом браузере.";
+        const mine = window.AUREUM_LOTS.filter((l) => state.bids[l.id].history.some((h) => h.user === user));
+        const watched = window.AUREUM_LOTS.filter((l) => state.bids[l.id].watch);
+        document.getElementById("my-bids").innerHTML = mine.length ? mine.map((l) => line(l, state.bids[l.id])).join("") : "<p class='muted'>Ставок пока нет</p>";
+        document.getElementById("watch").innerHTML = watched.length ? watched.map((l) => line(l, state.bids[l.id])).join("") : "<p class='muted'>Избранное пусто</p>";
+      }
+      document.getElementById("logout").onclick = () => {
+        setUser(null);
+        location.reload();
+      };
+    });
+  </script>
+</body>
+</html>

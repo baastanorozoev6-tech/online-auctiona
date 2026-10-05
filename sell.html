@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Продать лот — AUREUM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="site-header"></div>
+  <main class="section">
+    <div class="container two-col">
+      <div>
+        <div class="eyebrow">Consign</div>
+        <h2>Выставить лот на торги</h2>
+        <p class="muted">Заявка уходит специалистам категории. Обычно отвечаем в течение суток. Это демонстрационная форма — данные остаются в браузере.</p>
+      </div>
+      <form class="panel" id="sell-form">
+        <div class="field"><label>Категория</label>
+          <select id="s-cat">
+            <option>Искусство</option><option>Часы</option><option>Авто</option>
+            <option>Ювелирные изделия</option><option>Вино</option><option>Антиквариат</option>
+          </select>
+        </div>
+        <div class="field"><label>Название</label><input id="s-title" required placeholder="Например, Rolex Submariner 1680"></div>
+        <div class="field"><label>Ожидаемая цена, ₽</label><input id="s-price" type="number" min="10000" required></div>
+        <div class="field"><label>Описание и провенанс</label><textarea id="s-desc" rows="5" required></textarea></div>
+        <button class="btn btn-gold" type="submit">Отправить заявку</button>
+      </form>
+    </div>
+  </main>
+  <div id="site-footer"></div>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("sell-form").onsubmit = (e) => {
+        e.preventDefault();
+        if (!requireUser()) return;
+        const apps = JSON.parse(localStorage.getItem("aureum-sell") || "[]");
+        apps.push({
+          user: currentUser(),
+          cat: document.getElementById("s-cat").value,
+          title: document.getElementById("s-title").value,
+          price: document.getElementById("s-price").value,
+          desc: document.getElementById("s-desc").value,
+          t: Date.now()
+        });
+        localStorage.setItem("aureum-sell", JSON.stringify(apps));
+        e.target.reset();
+        toast("Заявка принята. Мы свяжемся с вами.");
+      };
+    });
+  </script>
+</body>
+</html>

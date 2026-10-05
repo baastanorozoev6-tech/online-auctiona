@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Лот — AUREUM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="site-header"></div>
+  <main class="container lot-layout" id="page"></main>
+  <div id="site-footer"></div>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const id = new URLSearchParams(location.search).get("id") || "lot-01";
+    function renderLot() {
+      const lot = window.AUREUM_LOTS.find((l) => l.id === id);
+      const rec = state.bids[id];
+      if (!lot) {
+        document.getElementById("page").innerHTML = "<p>Лот не найден</p>";
+        return;
+      }
+      const min = rec.current + lot.increment;
+      const imgs = lot.gallery && lot.gallery.length ? lot.gallery : [lot.image];
+      document.title = lot.title + " — AUREUM";
+      document.getElementById("page").innerHTML = `
+        <div>
+          <div class="gallery">
+            <img class="gallery-main" id="main-img" src="${imgs[0]}" alt="${lot.title}">
+            <div class="thumbs">${imgs.map((src, i) => `<img class="${i===0?"active":""}" src="${src}" data-src="${src}">`).join("")}</div>
+          </div>
+          <div class="lot-info">
+            <div class="lot-cat">${lot.category} · ${lot.location}</div>
+            <h2>${lot.title}</h2>
+            <p>${lot.artist}</p>
+            <p>${lot.description}</p>
+            <p>Провенанс: ${lot.provenance}</p>
+            <p>Эстимейт: ${money(lot.estimateMin)} — ${money(lot.estimateMax)}</p>
+          </div>
+        </div>
+        <aside class="bid-panel">
+          <span class="badge badge-live"><span class="pulse"></span> Онлайн-торги</span>
+          <div class="muted" style="margin-top:12px">Текущая ставка</div>
+          <h3 id="cur">${money(rec.current)}</h3>
+          <div class="muted">До закрытия</div>
+          <div class="timer js-timer" data-end="${rec.endsAt}">${remain(rec.endsAt)}</div>
+          <form class="bid-form" id="bid-form">
+            <input id="bid-amount" type="number" min="${min}" step="${lot.increment}" value="${min}">
+            <button class="btn btn-gold" type="submit">Поставить ${money(min)}</button>
+            <button class="btn btn-ghost" type="button" id="watch-btn">${rec.watch ? "В избранном" : "Следить за лотом"}</button>
+          </form>
+          <p class="muted">Шаг: ${money(lot.increment)}. Если до конца меньше 2 минут — торги продлеваются.</p>
+          <div class="history">
+            <h3>История ставок</h3>
+            <ul id="hist">${rec.history.slice(0, 8).map((h) => `<li><span>${h.user}</span><b>${money(h.amount)}</b></li>`).join("")}</ul>
+          </div>
+        </aside>
+      `;
+      document.querySelectorAll(".thumbs img").forEach((img) => {
+        img.onclick = () => {
+          document.getElementById("main-img").src = img.dataset.src;
+          document.querySelectorAll(".thumbs img").forEach((x) => x.classList.remove("active"));
+          img.classList.add("active");
+        };
+      });
+      document.getElementById("bid-form").onsubmit = (e) => {
+        e.preventDefault();
+        if (!requireUser()) return;
+        const amount = Number(document.getElementById("bid-amount").value);
+        const res = placeBid(id, amount);
+        toast(res.msg);
+        if (res.ok) renderLot();
+      };
+      document.getElementById("watch-btn").onclick = () => {
+        toggleWatch(id);
+        renderLot();
+      };
+    }
+    document.addEventListener("DOMContentLoaded", renderLot);
+    document.addEventListener("market", (e) => { if (e.detail === id) renderLot(); });
+  </script>
+</body>
+</html>

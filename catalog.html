@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Каталог лотов — AUREUM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="site-header"></div>
+  <main class="section">
+    <div class="container">
+      <div class="eyebrow">Catalogue</div>
+      <h2>Все лоты сезона</h2>
+      <p class="muted">Фильтр по категории, поиск по названию и автору.</p>
+      <div class="filters" id="filters"></div>
+      <div class="search-row">
+        <input id="q" placeholder="Поиск: Rolex, Cartier, холст…">
+        <select id="sort">
+          <option value="end">Скоро закроются</option>
+          <option value="price">Дороже</option>
+          <option value="price-asc">Дешевле</option>
+        </select>
+      </div>
+      <div class="cards" id="grid"></div>
+    </div>
+  </main>
+  <div id="site-footer"></div>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    let cat = "Все";
+    function cats() {
+      return ["Все", ...new Set(window.AUREUM_LOTS.map((l) => l.category))];
+    }
+    function drawFilters() {
+      document.getElementById("filters").innerHTML = cats().map((c) =>
+        `<button class="chip ${c === cat ? "active" : ""}" data-c="${c}">${c}</button>`
+      ).join("");
+      document.querySelectorAll(".chip").forEach((btn) => {
+        btn.onclick = () => { cat = btn.dataset.c; drawFilters(); draw(); };
+      });
+    }
+    function draw() {
+      const q = document.getElementById("q").value.toLowerCase();
+      const sort = document.getElementById("sort").value;
+      let list = window.AUREUM_LOTS.filter((l) => {
+        const text = (l.title + l.artist + l.category).toLowerCase();
+        return (cat === "Все" || l.category === cat) && text.includes(q);
+      });
+      list.sort((a, b) => {
+        if (sort === "end") return state.bids[a.id].endsAt - state.bids[b.id].endsAt;
+        if (sort === "price") return state.bids[b.id].current - state.bids[a.id].current;
+        return state.bids[a.id].current - state.bids[b.id].current;
+      });
+      document.getElementById("grid").innerHTML = list.map(lotCard).join("") || "<p class='muted'>Ничего не найдено</p>";
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+      drawFilters();
+      draw();
+      document.getElementById("q").oninput = draw;
+      document.getElementById("sort").onchange = draw;
+    });
+  </script>
+</body>
+</html>
